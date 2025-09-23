@@ -88,17 +88,108 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    util.raiseNotDefined()
+
+    OPEN = util.Stack()
+    CLOSED = set()
+    PATHS = {}
+
+    def pushSuccessors(parentCrds, OPEN, CLOSED, PATHS):
+        parentPath = PATHS[parentCrds]
+        children = problem.getSuccessors(parentCrds)
+        for childCrds, childAct, _ in children:
+            if childCrds not in CLOSED:
+                childPath = parentPath + [childAct]
+                OPEN.push(childCrds)
+                PATHS[childCrds] = childPath
+
+    startStateCrds = problem.getStartState()
+    PATHS[startStateCrds] = []
+    OPEN.push(startStateCrds)
+
+    while not OPEN.isEmpty():
+        stateCrds = OPEN.pop()
+        if problem.isGoalState(stateCrds):
+            return PATHS[stateCrds]
+        CLOSED.add(stateCrds)
+        pushSuccessors(stateCrds, OPEN, CLOSED, PATHS)
 
 def breadthFirstSearch(problem):
     """Находит самые поверхностные узлы в дереве поиска """
     "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    util.raiseNotDefined()
+    
+    OPEN = util.Queue()
+    CLOSED = set()
+    PATHS = {}
+
+    def pushSuccessors(parentCrds, OPEN, CLOSED, PATHS):
+        parentPath = PATHS[parentCrds]
+        children = problem.getSuccessors(parentCrds)
+        for childCrds, childAct, _ in children:
+            # The first time a child node is found, the shortest path to it is already known
+            if childCrds not in CLOSED and not PATHS.get(childCrds):
+                childPath = parentPath + [childAct]
+                OPEN.push(childCrds)
+                PATHS[childCrds] = childPath
+
+    startStateCrds = problem.getStartState()
+    PATHS[startStateCrds] = []
+    OPEN.push(startStateCrds)
+
+    while not OPEN.isEmpty():
+        stateCrds = OPEN.pop()
+        if problem.isGoalState(stateCrds):
+            return PATHS[stateCrds]
+        CLOSED.add(stateCrds)
+        pushSuccessors(stateCrds, OPEN, CLOSED, PATHS)
 
 def uniformCostSearch(problem):
     """Находит узел минимальной стоимости """
     "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    util.raiseNotDefined()
+    
+    # The implementation uses Priorities dictionary to account for the PriorityQueue not providing the priority
+    # together with the item during the pop() operation.
+    # A more efficient approach would obviously be modifying the PriorityQueue so pop() operation also returns
+    # the item's priority
+
+    def pushSuccessors(parentCrds, OPEN, CLOSED, PRIORITIES):
+        parentCost = PRIORITIES[parentCrds][0]
+        
+        children = problem.getSuccessors(parentCrds)
+        for childCrds, childAct, parentChildCost in children:
+            if childCrds not in CLOSED:
+                childCost = parentCost + parentChildCost
+                OPEN.update(childCrds, childCost)
+                if childCost < PRIORITIES.get(childCrds, (float('inf'), None, None))[0]:
+                    PRIORITIES[childCrds] = (childCost, childAct, parentCrds)
+
+    def findPath(goalCrds, PRIORITIES):
+        goalAct = PRIORITIES[goalCrds][1]
+        parentCrds = PRIORITIES[goalCrds][2]
+        parent = PRIORITIES[parentCrds]
+
+        path = [goalAct]
+
+        while parent[2] != None:
+            parentAct = parent[1]
+            path.append(parentAct)
+            parent = PRIORITIES[parent[2]]
+        path.reverse()
+        return path
+    
+    OPEN = util.PriorityQueue()
+    CLOSED = set({})
+    PRIORITIES = {}
+
+    startStateCrds = problem.getStartState()
+    PRIORITIES[startStateCrds] = (0, None, None)
+    OPEN.push(startStateCrds, 0)
+
+    while not OPEN.isEmpty():
+        stateCrds = OPEN.pop()
+        if problem.isGoalState(stateCrds):
+            return findPath(stateCrds, PRIORITIES)
+        CLOSED.add(stateCrds)
+        pushSuccessors(stateCrds, OPEN, CLOSED, PRIORITIES)
 
 def nullHeuristic(state, problem=None):
     """
