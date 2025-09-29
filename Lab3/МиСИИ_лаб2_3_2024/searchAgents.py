@@ -379,7 +379,25 @@ def cornersHeuristic(state, problem):
     corners = problem.corners # Координаты углов
     walls = problem.walls # Стены лабиринта в виде объекта Grid (game.py)
     "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    heuristic = len(problem.corners) - len(corners)
+    stateCrds, stateCorners = state
+    x, y = stateCrds
+
+    heuristic = 0
+    
+    untouchedCorners = set(corners).difference(set(stateCorners))
+
+    while untouchedCorners:
+        shortestDistance = float('inf')
+        shortestCorner = ()
+        for corner in untouchedCorners:
+            manhattanDistance = abs(corner[0] - x) + abs(corner[1] - y)
+            if manhattanDistance < shortestDistance:
+                shortestDistance = manhattanDistance
+                shortestCorner = corner
+        x, y = shortestCorner
+        heuristic += shortestDistance
+        untouchedCorners.remove(shortestCorner)
+
     return heuristic
 
 class AStarCornersAgent(SearchAgent):
