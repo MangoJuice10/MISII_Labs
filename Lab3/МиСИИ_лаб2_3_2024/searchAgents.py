@@ -493,7 +493,94 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
     "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-    return 0
+
+    heuristic = 0
+    
+    untouchedFood = foodGrid.asList()
+    """
+    heuristic = len(untouchedFood)
+    """
+
+    # This heuristic considers the distance to the closest food (5/7 tests passed)
+    """
+    shortestDistance = float('inf')
+    for food in untouchedFood:
+        manhattanDistance = abs(food[0] - x) + abs(food[1] - y)
+        if shortestDistance > manhattanDistance:
+            shortestDistance = manhattanDistance
+    heuristic = shortestDistance
+    if heuristic == float('inf'):
+        heuristic = 0
+    """
+
+    # This heuristic considers the distance to the farthest food (6/7 tests passed)
+    """
+    largestDistance = 0
+    for food in untouchedFood:
+        manhattanDistance = abs(food[0] - x) + abs(food[1] - y)
+        if largestDistance < manhattanDistance:
+            largestDistance = manhattanDistance
+    heuristic = largestDistance 
+    """
+
+    # This "heuristic" suggests to use BFS algorithm in order to find out the exact length of the remaining path for each state, to
+    # then move towards the goal state in the best possible way.
+    """
+    def isGoalState(state):
+        untouchedFood = state[1]
+        return not len(untouchedFood)
+
+    def getSuccessors(state):
+        stateCrds, untouchedFood = state
+
+        successors = []
+        
+        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+            x, y = stateCrds
+            dx, dy = Actions.directionToVector(action)
+            nextX, nextY = int(x + dx), int(y + dy)
+            if not problem.walls[nextX][nextY]:
+                nextStateCrds = (nextX, nextY)
+                nextUntouchedFood = list(untouchedFood)
+                if nextStateCrds in untouchedFood:
+                    nextUntouchedFood.remove(nextStateCrds)
+                successors.append(((nextStateCrds, tuple(nextUntouchedFood)), action, 1))
+
+        return successors
+
+    OPEN = util.Queue()
+    CLOSED = set({})
+    PATHS = {}
+
+    def pushSuccessors(parentState, OPEN, CLOSED, PATHS):
+        parentPath = PATHS[parentState]
+        children = getSuccessors(state)
+        for childState, childAct, _ in children:
+            if childState not in CLOSED and childState not in PATHS:
+                PATHS[childState] = parentPath + [childAct]
+                OPEN.push(childState)
+
+    startState = (position, tuple(untouchedFood))
+    PATHS[startState] = []
+    OPEN.push(startState)
+
+    while not OPEN.isEmpty():
+        state = OPEN.pop()
+        if isGoalState(state):
+            heuristic = len(PATHS[state])
+            break
+        CLOSED.add(state)
+        pushSuccessors(state, OPEN, CLOSED, PATHS)
+    """
+
+    farthestDist = 0
+    for food in untouchedFood:
+        dist = mazeDistance(position, food, problem.startingGameState)
+        if farthestDist < dist:
+            farthestDist = dist
+    heuristic = farthestDist
+    
+    return heuristic
 
 class ClosestDotSearchAgent(SearchAgent):
     " Поиск еды с помощью последовательных поисков"
@@ -560,7 +647,7 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** ВСТАВЬТЕ ВАШ КОД СЮДА ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
 
 def mazeDistance(point1, point2, gameState):
     """
